@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Legacy Money - Loan Application</title>
+<style>
+body{font-family:Arial;background:#f2f4f7;padding:15px}
+.box{max-width:520px;margin:auto;background:white;padding:20px;border-radius:12px}
+h2{text-align:center;color:#17365d}
+label{display:block;font-weight:bold;margin-top:14px}
+input,select,textarea,button{width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid #bbb;border-radius:6px;font-size:16px}
+button{background:#17365d;color:white;border:0;cursor:pointer}
+video,canvas{width:100%;margin-top:12px;border-radius:8px}
+#status{font-weight:bold;margin-top:15px}
+.consent{display:flex;gap:10px;align-items:flex-start;font-weight:normal}
+.consent input{width:auto;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>LEGACY MONEY</h2>
+<h3>Loan Application Form</h3>
+
+<form id="loanForm">
+<label>Applicant Full Name *</label>
+<input name="name" required>
+
+<label>Father's Name / Husband's Name *</label>
+<input name="father" required>
+
+<label>Mobile Number *</label>
+<input name="mobile" type="tel" required>
+
+<label>Date of Birth *</label>
+<input name="dob" type="date" required>
+
+<label>Full Address *</label>
+<textarea name="address" required></textarea>
+
+<label>District *</label>
+<input name="district" required>
+
+<label>Pin Code *</label>
+<input name="pin" inputmode="numeric" required>
+
+<label>Occupation *</label>
+<input name="occupation" required>
+
+<label>Monthly Income (₹) *</label>
+<input name="income" type="number" min="0" required>
+
+<label>Loan Amount Required (₹) *</label>
+<input name="amount" type="number" min="1" required>
+
+<label>Loan Tenure *</label>
+<select name="tenure" required>
+<option value="">Select tenure</option>
+<option>3 Months</option>
+<option>6 Months</option>
+<option>9 Months</option>
+<option>12 Months</option>
+</select>
+
+<label>Loan Purpose *</label>
+<textarea name="purpose" required></textarea>
+
+<label>Live Camera Selfie *</label>
+<video id="video" autoplay playsinline></video>
+<button type="button" id="startCamera">Start Camera</button>
+<button type="button" id="capture">Capture Selfie</button>
+<canvas id="canvas" hidden></canvas>
+<p id="cameraStatus">Camera not started.</p>
+
+<label class="consent">
+<input type="checkbox" id="consent" required>
+<span>I am applying knowingly and voluntarily. I consent to my selfie being stored in Google Drive for loan application verification.</span>
+</label>
+
+<button type="submit" id="submitBtn">Submit Application</button>
+</form>
+
+<p id="status"></p>
+</div>
+
+<iframe name="resultFrame" id="resultFrame" hidden></iframe>
+
+<form id="postForm" method="POST"
+action="https://script.google.com/macros/s/AKfycbwDgSU4RSknQDPVohvlix1_uur0adoZIkNXeAZwG4hKkqEtKkjbnRklDNCUYLmyBuM9/exec"
+target="resultFrame" enctype="application/x-www-form-urlencoded">
+</form>
+
+<script>
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const cameraStatus=document.getElementById("cameraStatus");
+let stream=null;
+let selfieData="";
+
+document.getElementById("startCamera").onclick=async()=>{
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:"user"},
+      audio:false
+    });
+    video.srcObject=stream;
+    cameraStatus.textContent="Camera started. Please look at the camera.";
+  }catch(err){
+    cameraStatus.textContent=err.name+": "+err.message;
+  }
+};
+
+document.getElementById("capture").onclick=()=>{
+  if(!stream || !video.videoWidth){
+    cameraStatus.textContent="Please start the camera first.";
+    return;
+  }
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  canvas.getContext("2d").drawImage(video,0,0);
+  selfieData=canvas.toDataURL("image/jpeg",0.75);
+  canvas.hidden=false;
+  cameraStatus.textContent="Selfie captured successfully.";
+};
+
+document.getElementById("loanForm").onsubmit=(e)=>{
+  e.preventDefault();
+
+  if(!selfieData){
+    alert("Please capture your live selfie first.");
+    return;
+  }
+
+  const form=e.target;
+  const data=Object.fromEntries(new FormData(form).entries());
+  data.selfie=selfieData;
+
+  const postForm=document.getElementById("postForm");
+  postForm.innerHTML="";
+
+  Object.entries(data).forEach(([key,value])=>{
+    const input=document.createElement("input");
+    input.type="hidden";
+    input.name=key;
+    input.value=value;
+    postForm.appendChild(input);
+  });
+
+  document.getElementById("submitBtn").disabled=true;
+  document.getElementById("status").textContent=
+    "Submitting application. Please wait...";
+
+  postForm.submit();
+
+  setTimeout(()=>{
+    document.getElementById("status").textContent=
+      "Request sent. Please verify the new application in your Google Sheet before submitting again.";
+  },3000);
+};
+</script>
+</body>
+</html>
