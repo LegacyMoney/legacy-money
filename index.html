@@ -159,6 +159,7 @@ document.getElementById("loanForm").onsubmit=(e)=>{
   document.getElementById("submitBtn").disabled=true;
   document.getElementById("status").textContent=
     "Submitting application. Please wait...";
+  postForm.target = "resultFrame";
 
   postForm.submit();
 
