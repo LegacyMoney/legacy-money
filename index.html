@@ -93,6 +93,14 @@ target="resultFrame" enctype="application/x-www-form-urlencoded">
 
 <script>
 const video=document.getElementById("video");
+  window.addEventListener("message", (event) => {
+  const result = event.data;
+
+  if (!result || result.type !== "legacyMoneyResult") return;
+
+  document.getElementById("status").textContent = result.message;
+  document.getElementById("submitBtn").disabled = false;
+});
 const canvas=document.getElementById("canvas");
 const cameraStatus=document.getElementById("cameraStatus");
 let stream=null;
@@ -116,10 +124,11 @@ document.getElementById("capture").onclick=()=>{
     cameraStatus.textContent="Please start the camera first.";
     return;
   }
-  canvas.width=video.videoWidth;
-  canvas.height=video.videoHeight;
+  const scale = Math.min(1, 640 / video.videoWidth);
+canvas.width = Math.round(video.videoWidth * scale);
+canvas.height = Math.round(video.videoHeight * scale);
   canvas.getContext("2d").drawImage(video,0,0);
-  selfieData=canvas.toDataURL("image/jpeg",0.75);
+ selfieData = canvas.toDataURL("image/jpeg", 0.55);
   canvas.hidden=false;
   cameraStatus.textContent="Selfie captured successfully.";
 };
@@ -153,10 +162,7 @@ document.getElementById("loanForm").onsubmit=(e)=>{
 
   postForm.submit();
 
-  setTimeout(()=>{
-    document.getElementById("status").textContent=
-      "Request sent. Please verify the new application in your Google Sheet before submitting again.";
-  },3000);
+  
 };
 </script>
 </body>
