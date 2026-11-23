@@ -1,29 +1,84 @@
 
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Legacy Money - Loan Application</title>
+
 <style>
-body{font-family:Arial;background:#f2f4f7;padding:15px}
-.box{max-width:520px;margin:auto;background:white;padding:20px;border-radius:12px}
-h2{text-align:center;color:#17365d}
-label{display:block;font-weight:bold;margin-top:14px}
-input,select,textarea,button{width:100%;box-sizing:border-box;padding:12px;margin-top:6px;border:1px solid #bbb;border-radius:6px;font-size:16px}
-button{background:#17365d;color:white;border:0;cursor:pointer}
-video,canvas{width:100%;margin-top:12px;border-radius:8px}
-#status{font-weight:bold;margin-top:15px}
-.consent{display:flex;gap:10px;align-items:flex-start;font-weight:normal}
-.consent input{width:auto;margin-top:3px}
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f4f7;
+  padding: 15px;
+}
+.box {
+  max-width: 520px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+h2 {
+  text-align: center;
+  color: #17365d;
+}
+label {
+  display: block;
+  font-weight: bold;
+  margin-top: 14px;
+}
+input, select, textarea, button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  margin-top: 6px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  font-size: 16px;
+}
+button {
+  background: #17365d;
+  color: white;
+  border: 0;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+video, canvas {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 8px;
+}
+#status {
+  font-weight: bold;
+  margin-top: 15px;
+}
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: normal;
+}
+.consent input {
+  width: auto;
+  margin-top: 3px;
+}
 </style>
 </head>
+
 <body>
+
 <div class="box">
+
 <h2>LEGACY MONEY</h2>
 <h3>Loan Application Form</h3>
 
 <form id="loanForm">
+
 <label>Applicant Full Name *</label>
 <input name="name" required>
 
@@ -67,103 +122,199 @@ video,canvas{width:100%;margin-top:12px;border-radius:8px}
 <textarea name="purpose" required></textarea>
 
 <label>Live Camera Selfie *</label>
+
 <video id="video" autoplay playsinline></video>
-<button type="button" id="startCamera">Start Camera</button>
-<button type="button" id="capture">Capture Selfie</button>
+
+<button type="button" id="startCamera">
+Start Camera
+</button>
+
+<button type="button" id="capture">
+Capture Selfie
+</button>
+
 <canvas id="canvas" hidden></canvas>
+
 <p id="cameraStatus">Camera not started.</p>
 
 <label class="consent">
 <input type="checkbox" id="consent" required>
-<span>I am applying knowingly and voluntarily. I consent to my selfie being stored in Google Drive for loan application verification.</span>
+<span>
+I am applying knowingly and voluntarily. I consent to my selfie
+being stored in Google Drive for loan application verification.
+</span>
 </label>
 
-<button type="submit" id="submitBtn">Submit Application</button>
+<button type="submit" id="submitBtn">
+Submit Application
+</button>
+
 </form>
 
 <p id="status"></p>
+
 </div>
 
-<iframe name="resultFrame" id="resultFrame" hidden></iframe>
+<iframe
+  name="resultFrame"
+  id="resultFrame"
+  hidden>
+</iframe>
 
-<form id="postForm" method="POST"
-action="https://script.google.com/macros/s/AKfycbzm05yQSJpdYMZyUPpCepHRk1bvGU-7i3XHCQU6HaTdWNTs19Aq_3sQOsIdeRQQMUvf/exec"
-target="resultFrame" enctype="application/x-www-form-urlencoded">
+<form
+  id="postForm"
+  method="POST"
+  action="https://script.google.com/macros/s/AKfycbzm05yQSJpdYMZyUPpCepHRk1bvGU-7i3XHCQU6HaTdWNTs19Aq_3sQOsIdeRQQMUvf/exec"
+  target="resultFrame"
+  enctype="application/x-www-form-urlencoded">
 </form>
 
 <script>
-const video=document.getElementById("video");
-  window.addEventListener("message", (event) => {
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const cameraStatus = document.getElementById("cameraStatus");
+
+let stream = null;
+let selfieData = "";
+
+// Receive response from Google Apps Script
+window.addEventListener("message", (event) => {
+
   const result = event.data;
 
-  if (!result || result.type !== "legacyMoneyResult") return;
-
-  document.getElementById("status").textContent = result.message;
-  document.getElementById("submitBtn").disabled = false;
-});
-const canvas=document.getElementById("canvas");
-const cameraStatus=document.getElementById("cameraStatus");
-let stream=null;
-let selfieData="";
-
-document.getElementById("startCamera").onclick=async()=>{
-  try{
-    stream=await navigator.mediaDevices.getUserMedia({
-     video:true,
-audio:false
-    });
-    video.srcObject=stream;
-    cameraStatus.textContent="Camera started. Please look at the camera.";
-  }catch(err){
-    cameraStatus.textContent=err.name+": "+err.message;
+  if (!result || result.type !== "legacyMoneyResult") {
+    return;
   }
+
+  document.getElementById("status").textContent =
+    result.message;
+
+  document.getElementById("submitBtn").disabled = false;
+
+});
+
+// Start Camera
+document.getElementById("startCamera").onclick = async () => {
+
+  try {
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+      throw new Error("Camera is not supported by this browser.");
+    }
+
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    cameraStatus.textContent =
+      "Camera started. Please look at the camera.";
+
+  } catch (err) {
+
+    cameraStatus.textContent =
+      err.name + ": " + err.message;
+
+  }
+
 };
 
-document.getElementById("capture").onclick=()=>{
-  if(!stream || !video.videoWidth){
-    cameraStatus.textContent="Please start the camera first.";
+// Capture Selfie
+document.getElementById("capture").onclick = () => {
+
+  if (!stream || !video.videoWidth) {
+
+    cameraStatus.textContent =
+      "Please start the camera first.";
+
     return;
   }
-  const scale = Math.min(1, 640 / video.videoWidth);
-canvas.width = Math.round(video.videoWidth * scale);
-canvas.height = Math.round(video.videoHeight * scale);
-  canvas.getContext("2d").drawImage(video,0,0);
- console.log("Selfie size:", selfieData.length);
-  canvas.hidden=false;
-cameraStatus.textContent="Selfie captured successfully.";
 
-document.getElementById("loanForm").onsubmit=(e)=>{
+  const scale = Math.min(1, 640 / video.videoWidth);
+
+  canvas.width = Math.round(video.videoWidth * scale);
+  canvas.height = Math.round(video.videoHeight * scale);
+
+  const context = canvas.getContext("2d");
+
+  context.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  // Save actual selfie data
+  selfieData = canvas.toDataURL("image/jpeg", 0.55);
+
+  canvas.hidden = false;
+
+  console.log("Selfie size:", selfieData.length);
+
+  cameraStatus.textContent =
+    "Selfie captured successfully.";
+
+};
+
+// Submit Loan Application
+document.getElementById("loanForm").onsubmit = (e) => {
+
   e.preventDefault();
 
-  if(!selfieData){
+  if (!selfieData) {
+
     alert("Please capture your live selfie first.");
     return;
+
   }
 
-  const form=e.target;
-  const data=Object.fromEntries(new FormData(form).entries());
-  data.selfie=selfieData;
+  const form = e.target;
 
-  const postForm=document.getElementById("postForm");
-  postForm.innerHTML="";
+  const data = Object.fromEntries(
+    new FormData(form).entries()
+  );
 
-  Object.entries(data).forEach(([key,value])=>{
-    const input=document.createElement("input");
-    input.type="hidden";
-    input.name=key;
-    input.value=value;
+  data.selfie = selfieData;
+
+  const postForm = document.getElementById("postForm");
+
+  postForm.innerHTML = "";
+
+  Object.entries(data).forEach(([key, value]) => {
+
+    const input = document.createElement("input");
+
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+
     postForm.appendChild(input);
+
   });
 
-  document.getElementById("submitBtn").disabled=true;
-  document.getElementById("status").textContent=
+  document.getElementById("submitBtn").disabled = true;
+
+  document.getElementById("status").textContent =
     "Submitting application. Please wait...";
+
   postForm.target = "resultFrame";
 
   postForm.submit();
 
-  
 };
+
 </script>
+
 </body>
 </html>
+```
