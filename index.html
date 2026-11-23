@@ -179,6 +179,8 @@ let stream = null;
 let selfieData = "";
 
 // Receive response from Google Apps Script
+
+
 window.addEventListener("message", (event) => {
 
   const result = event.data;
@@ -190,9 +192,23 @@ window.addEventListener("message", (event) => {
   document.getElementById("status").textContent =
     result.message;
 
+  if (result.success === true) {
+
+    document.getElementById("submitBtn").disabled = true;
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+
+    return;
+  }
+
   document.getElementById("submitBtn").disabled = false;
 
 });
+
+// Start Camera
+document.getElementById("startCamera").onclick = async () => {
 
 // Start Camera
 document.getElementById("startCamera").onclick = async () => {
