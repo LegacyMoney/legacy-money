@@ -130,7 +130,7 @@ canvas.height = Math.round(video.videoHeight * scale);
   canvas.getContext("2d").drawImage(video,0,0);
  console.log("Selfie size:", selfieData.length);
   canvas.hidden=false;
- cameraStatus.textContent="Selfie captured successfully. Data size: " + selfieData.length;
+cameraStatus.textContent="Selfie captured successfully.";
 
 document.getElementById("loanForm").onsubmit=(e)=>{
   e.preventDefault();
